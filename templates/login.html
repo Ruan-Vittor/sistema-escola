@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Escola dos Sonhos - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='login.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <main>
+        <div class="login-box">
+            <div class="illustration">
+                <img src="{{ url_for('static', filename='img/114952227-a-palavra-educao-cercada-por-ícones-ilustração-de-fundo-do-vetor.jpg') }}" alt="Ilustração escola">
+            </div>
+            <form action="/" method="POST">
+                <h1>Bem-vindo(a)</h1>
+                <p class="subtitulo">Faça login para acessar sua conta</p>
+
+                <div class="input-box">
+                    <input type="email" name="usuario" placeholder="Digite seu email" required>
+                </div>
+                <div class="input-box">
+                    <input type="password" name="senha" placeholder="Digite sua senha" required>
+                </div>
+
+                <button class="btn" type="submit">Entrar</button>
+
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer_dex">
+            <div class="footer_sl">
+                <h3>Redes sociais</h3>
+                <p>Acesse nossos contatos 👇</p>
+                <div class="footer_social">
+                    <a href="#" class="footer_insta"><img src="https://img.icons8.com/color/48/instagram-new--v1.png" alt="Instagram"/></a>
+                    <a href="#" class="footer_face"><img src="https://img.icons8.com/fluency/48/facebook-new.png" alt="Facebook"/></a>
+                    <a href="#" class="footer_what"><img src="https://img.icons8.com/color/48/whatsapp--v1.png" alt="Whatsapp"/></a>
+                </div>
+            </div>
+
+            <ul class="footer_nomes">
+                <h3>Equipe</h3>
+                <li><a href="https://www.instagram.com/ruanxzin.08/" class="footer_links">@ruanxzin.08</a></li>
+            </ul>
+
+            <div class="footer_info">
+                <h3>Sobre</h3>
+                <p>Este site permite que professores e alunos gerenciem notas, faltas e conteúdos, proporcionando uma experiência agradável e intuitiva.</p>
+            </div>
+
+            <div class="footer_contato">
+                <h3>Contato</h3>
+                <p><span>(61) 97403-4377</span></p>
+            </div>
+        </div>
+
+        <div class="footer_copyright">
+            &#169; 2025 Escola dos Sonhos. Todos os direitos reservados.
+        </div>
+    </footer>
+</body>
+</html>

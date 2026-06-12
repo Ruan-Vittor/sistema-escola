@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8">
+  <title>Painel do Administrador</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+</head>
+
+<body>
+  <div class="container">
+    <aside class="sidebar">
+      <div class="logo">
+        <h2>Admin<span>School</span></h2>
+      </div>
+      <nav class="menu">
+        <a href="{{ url_for('admin_dashboard') }}" class="{{ 'active' if view=='dashboard' else '' }}">🏠 Dashboard</a>
+        <a href="{{ url_for('listar_professores') }}"
+          class="{{ 'active' if view.startswith('professores') else '' }}">👨‍🏫 Professores</a>
+        <a href="{{ url_for('listar_alunos') }}" class="{{ 'active' if view.startswith('alunos') else '' }}">🧑‍🎓
+          Alunos</a>
+        <a href="{{ url_for('listar_notas') }}" class="{{ 'active' if view.startswith('notas') else '' }}">📊 Notas</a>
+        <a href="{{ url_for('listar_materiais') }}" class="{{ 'active' if view.startswith('materiais') else '' }}">📚
+          Materiais</a>
+        <a href="{{ url_for('listar_admins') }}" class="{{ 'active' if view.startswith('admins') else '' }}">🧑‍💼
+          Administradores</a>
+        <a href="{{ url_for('perfil') }}" class="{{ 'active' if view=='perfil' else '' }}">⚙️ Perfil</a>
+        <a class="logout" href="{{ url_for('logout') }}">Sair</a>
+      </nav>
+      <footer>
+        <p>© 2025 AdminSchool</p>
+      </footer>
+    </aside>
+
+    <main class="main-content">
+      <header>
+        <h1>Painel do Administrador</h1>
+      </header>
+
+      <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, msg in messages %}
+        <div class="flash {{ category }}">{{ msg }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+      </div>
+
+      {# DASHBOARD #}
+      {% if view == 'dashboard' %}
+      <section class="dashboard">
+        <h2>Visão Geral</h2>
+        <div class="cards">
+          <div class="card">
+            <h3>Total de Alunos</h3>
+            <p>{{ resumo.total_alunos }}</p>
+          </div>
+          <div class="card">
+            <h3>Total de Professores</h3>
+            <p>{{ resumo.total_professores }}</p>
+          </div>
+          <div class="card">
+            <h3>Total de Administradores</h3>
+            <p>{{ resumo.total_admins }}</p>
+          </div>
+          <div class="card">
+            <h3>Média Geral</h3>
+            <p>{{ resumo.media_geral }}</p>
+          </div>
+        </div>
+        <p class="note">Todas as operações (adicionar/editar/excluir) são feitas nas respectivas seções.</p>
+      </section>
+      {% endif %}
+
+      {# PROFESSORES - LISTA #}
+      {% if view == 'professores' %}
+      <section>
+        <h2>Professores</h2>
+        <a class="btn" href="{{ url_for('add_professor') }}">+ Novo Professor</a>
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Disciplina</th>
+              <th>Email</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in professores %}
+            <tr>
+              <td>{{ p.nome }}</td>
+              <td>{{ p.disciplina }}</td>
+              <td>{{ p.email }}</td>
+              <td class="acoes">
+                <a class="link" href="{{ url_for('edit_professor', id=p.id) }}">Editar</a>
+                <form class="inline-form" method="post" action="{{ url_for('delete_professor', id=p.id) }}"
+                  onsubmit="return confirm('Excluir professor?');">
+                  <button class="link danger" type="submit">Excluir</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4">Nenhum professor cadastrado.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      {% endif %}
+
+      {# PROFESSORES - ADD #}
+      {% if view == 'professores_add' %}
+      <section>
+        <h2>Adicionar Professor</h2>
+        <!-- A API aceita nome+email para criar usuário, ou usuario_id se quiser reutilizar -->
+        <form method="post" action="{{ url_for('add_professor') }}" class="form">
+          <label>Nome (novo usuário)</label>
+          <input name="nome" placeholder="Nome completo (se for criar usuário)">
+          <label>Email (novo usuário)</label>
+          <input name="email" type="email" placeholder="email@exemplo.com">
+          <label>Ou selecione um usuário existente (opcional)</label>
+          {% if usuarios %}
+          <select name="usuario_id">
+            <option value="">-- usar usuário existente --</option>
+            {% for u in usuarios %}<option value="{{ u.id }}">{{ u.nome }} — {{ u.email }}</option>{% endfor %}
+          </select>
+          {% else %}
+          <input name="usuario_id" placeholder="ID do usuário (opcional)">
+          {% endif %}
+          <label>Disciplina</label><input name="disciplina" required>
+          <div class="form-actions">
+            <button class="btn" type="submit">Salvar</button>
+            <a class="btn ghost" href="{{ url_for('listar_professores') }}">Cancelar</a>
+          </div>
+        </form>
+      </section>
+      {% endif %}
+
+     {% if view == 'professores_edit' %}
+<section>
+  <h2>Editar Professor</h2>
+
+  <form method="post" action="{{ url_for('edit_professor', id=item.id) }}" class="form">
+
+    <label>Nome</label>
+    <input name="nome" value="{{ item.nome }}" required>
+
+    <label>Email</label>
+    <input name="email" value="{{ item.email }}" type="email" required>
+
+    <label>Disciplina</label>
+    <input name="disciplina" value="{{ item.disciplina }}" required>
+
+    <!-- NOVO CAMPO: ATRIBUIR TURMAS AO PROFESSOR -->
+    <label>Turmas do Professor</label>
+    <div class="checkbox-list" style="display:flex; flex-direction:column; gap:6px; margin:10px 0;">
+      {% for t in turmas %}
+      <label style="display:flex; align-items:center; gap:6px;">
+        <input type="checkbox" name="turmas" value="{{ t.id }}"
+               {% if t.id in turmas_do_prof %}checked{% endif %}>
+        {{ t.nome }}
+      </label>
+      {% endfor %}
+    </div>
+
+    <div class="form-actions">
+      <button class="btn" type="submit">Atualizar</button>
+      <a class="btn ghost" href="{{ url_for('listar_professores') }}">Cancelar</a>
+    </div>
+
+  </form>
+</section>
+{% endif %}
+
+
+      {# ALUNOS - LISTA #}
+      {% if view == 'alunos' %}
+      <section>
+        <h2>Alunos</h2>
+        <a class="btn" href="{{ url_for('add_aluno') }}">+ Novo Aluno</a>
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Série</th>
+              <th>Email</th>
+              <th>Turma</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in alunos %}
+            <tr>
+              <td>{{ a.nome }}</td>
+              <td>{{ a.serie }}</td>
+              <td>{{ a.email }}</td>
+              <td>{{ a.turma }}</td>
+              <td class="acoes">
+                <a class="link" href="{{ url_for('edit_aluno', id=a.id) }}">Editar</a>
+                <form class="inline-form" method="post" action="{{ url_for('delete_aluno', id=a.id) }}"
+                  onsubmit="return confirm('Excluir aluno?');">
+                  <button class="link danger" type="submit">Excluir</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5">Nenhum aluno cadastrado.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      {% endif %}
+
+      {% if view == 'alunos_add' %}
+      <section>
+        <h2>Adicionar Aluno</h2>
+        <form method="post" action="{{ url_for('add_aluno') }}" class="form">
+
+          <h3>Dados do Usuário</h3>
+
+          <label>Nome</label>
+          <input type="text" name="nome" required>
+
+          <label>Email</label>
+          <input type="email" name="email" required>
+
+          <label>Série</label>
+          <input type="text" name="serie" required>
+
+          <label>Turma</label>
+          <select name="turma_id">
+            <option value="">-- Selecione --</option>
+            {% for t in turmas %}
+            <option value="{{ t.id }}">{{ t.nome }}</option>
+            {% endfor %}
+          </select>
+
+          <div class="form-actions">
+            <button class="btn" type="submit">Cadastrar</button>
+            <a class="btn ghost" href="{{ url_for('listar_alunos') }}">Cancelar</a>
+          </div>
+
+        </form>
+      </section>
+      {% endif %}
+
+
+      {# ALUNOS - EDIT #}
+      {% if view == 'alunos_edit' %}
+      <section>
+        <h2>Editar Aluno</h2>
+        <form method="post" action="{{ url_for('edit_aluno', id=item.id) }}" class="form">
+
+          <label>Nome</label>
+          <input name="nome" value="{{ item.usuario_nome }}" required>
+
+          <label>Email</label>
+          <input name="email" value="{{ item.usuario_email }}" type="email" required>
+
+          <label>Série</label>
+          <input name="serie" value="{{ item.serie }}" required>
+
+          <label>Turma</label>
+          {% if turmas %}
+          <select name="turma_id">
+            <option value="">-- selecione --</option>
+            {% for t in turmas %}
+            <option value="{{ t.id }}" {% if t.id==item.turma_id %}selected{% endif %}>
+              {{ t.nome }}
+            </option>
+            {% endfor %}
+          </select>
+          {% else %}
+          <input name="turma_id" value="{{ item.turma_id }}">
+          {% endif %}
+
+          <div class="form-actions">
+            <button class="btn" type="submit">Atualizar</button>
+            <a class="btn ghost" href="{{ url_for('listar_alunos') }}">Cancelar</a>
+          </div>
+        </form>
+      </section>
+      {% endif %}
+
+
+      {# MATERIAIS #}
+      {% if view == 'materiais' %}
+      <section>
+        <h2>Materiais</h2>
+        <a class="btn" href="{{ url_for('add_material') }}">+ Novo Material</a>
+        <table>
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Professor</th>
+              <th>Link</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for m in materiais %}
+            <tr>
+              <td>{{ m.titulo }}</td>
+              <td>{{ m.professor_nome or '-' }}</td>
+              <td>
+                {% if m.link %}
+                <a href="{{ m.link }}" target="_blank">Abrir</a>
+                {% else %}
+                —
+                {% endif %}
+              </td>
+              <td class="acoes">
+                <a class="link" href="{{ url_for('edit_material', id=m.id) }}">Editar</a>
+                <form class="inline-form" method="post" action="{{ url_for('delete_material', id=m.id) }}"
+                  onsubmit="return confirm('Excluir material?');">
+                  <button class="link danger" type="submit">Excluir</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4">Nenhum material cadastrado.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      {% endif %}
+
+      {% if view == 'materiais_add' %}
+      <section>
+        <h2>Adicionar Material</h2>
+        <form method="post" action="{{ url_for('add_material') }}" class="form">
+          <label>Título</label><input name="titulo" required>
+          <label>Descrição</label><input name="descricao">
+          <label>Link (opcional)</label><input name="link">
+          <label>Professor</label>
+          {% if professores %}
+          <select name="professor_id" required>
+            <option value="">-- selecione --</option>
+            {% for p in professores %}<option value="{{ p.id }}">{{ p.nome }} — {{ p.email }}</option>{% endfor %}
+          </select>
+          {% else %}
+          <input name="professor_email" placeholder="email do professor (fallback)">
+          {% endif %}
+          <div class="form-actions">
+            <button class="btn" type="submit">Salvar</button>
+            <a class="btn ghost" href="{{ url_for('listar_materiais') }}">Cancelar</a>
+          </div>
+        </form>
+      </section>
+      {% endif %}
+
+      {% if view == 'materiais_edit' %}
+      <section>
+        <h2>Editar Material</h2>
+        <form method="post" action="{{ url_for('edit_material', id=item.id) }}" class="form">
+          <label>Título</label><input name="titulo" value="{{ item.titulo }}" required>
+          <label>Descrição</label><input name="descricao" value="{{ item.descricao }}">
+          <label>Link</label><input name="link" value="{{ item.link }}">
+          <label>Professor</label>
+          {% if professores %}
+          <select name="professor_id" required>
+            {% for p in professores %}
+            <option value="{{ p.id }}" {{ 'selected' if p.id==item.professor_id else '' }}>{{ p.nome }} — {{ p.email }}
+            </option>
+            {% endfor %}
+          </select>
+          {% else %}
+          <input name="professor_id" value="{{ item.professor_id }}">
+          {% endif %}
+          <div class="form-actions">
+            <button class="btn" type="submit">Atualizar</button>
+            <a class="btn ghost" href="{{ url_for('listar_materiais') }}">Cancelar</a>
+          </div>
+        </form>
+      </section>
+      {% endif %}
+
+      {# ADMINS #}
+      {% if view == 'admins' %}
+      <section>
+        <h2>Administradores</h2>
+        <a class="btn" href="{{ url_for('add_admin') }}">+ Novo Admin</a>
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Email</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in admins %}
+            <tr>
+              <td>{{ a.nome }}</td>
+              <td>{{ a.email }}</td>
+              <td class="acoes">
+                <a class="link" href="{{ url_for('edit_admin', id=a.id) }}">Editar</a>
+                <form class="inline-form" method="post" action="{{ url_for('delete_admin', id=a.id) }}"
+                  onsubmit="return confirm('Excluir administrador?');">
+                  <button class="link danger" type="submit">Excluir</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="3">Nenhum administrador cadastrado.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      {% endif %}
+
+      {% if view == 'admins_add' %}
+      <section>
+        <h2>Adicionar Administrador</h2>
+        <form method="post" action="{{ url_for('add_admin') }}" class="form">
+          <label>Nome</label><input name="nome" required>
+          <label>Email</label><input name="email" type="email" required>
+          <div class="form-actions">
+            <button class="btn" type="submit">Salvar</button>
+            <a class="btn ghost" href="{{ url_for('listar_admins') }}">Cancelar</a>
+          </div>
+        </form>
+      </section>
+      {% endif %}
+
+      {% if view == 'admins_edit' %}
+      <section>
+        <h2>Editar Administrador</h2>
+        <form method="post" action="{{ url_for('edit_admin', id=item.id) }}" class="form">
+          <label>Nome</label><input name="nome" value="{{ item.nome }}" required>
+          <label>Email</label><input name="email" value="{{ item.email }}" type="email" required>
+          <div class="form-actions">
+            <button class="btn" type="submit">Atualizar</button>
+            <a class="btn ghost" href="{{ url_for('listar_admins') }}">Cancelar</a>
+          </div>
+        </form>
+      </section>
+      {% endif %}
+
+      {# NOTAS #}
+      {% if view == 'notas' %}
+      <section>
+        <h2>Notas</h2>
+        <a class="btn" href="{{ url_for('add_nota') }}">+ Nova Nota</a>
+        <table>
+          <thead>
+            <tr>
+              <th>Aluno</th>
+              <th>Disciplina</th>
+              <th>Professor</th>
+              <th>Nota</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for n in notas %}
+            <tr>
+              <td>{{ n.aluno_nome }}</td>
+              <td>{{ n.materia_nome }}</td>
+              <td>{{ n.professor_nome or '-' }}</td>
+              <td>{{ n.nota }}</td>
+              <td class="acoes">
+                <a class="link" href="{{ url_for('edit_nota', id=n.id) }}">Editar</a>
+                <form class="inline-form" method="post" action="{{ url_for('delete_nota', id=n.id) }}"
+                  onsubmit="return confirm('Excluir nota?');">
+                  <button class="link danger" type="submit">Excluir</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="5">Nenhuma nota cadastrada.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      {% endif %}
+
+      {% if view == 'notas_add' %}
+      <section>
+        <h2>Adicionar Nota</h2>
+        <form method="post" action="{{ url_for('add_nota') }}" class="form">
+          <label>Aluno</label>
+          <select name="aluno_id" required>
+            <option value="">-- selecione --</option>
+            {% for a in alunos %}<option value="{{ a.id }}">{{ a.nome }}</option>{% endfor %}
+          </select>
+
+          <label>Disciplina (Matéria)</label>
+          <select name="materia_id" required>
+            <option value="">-- selecione --</option>
+            {% for m in materias %}<option value="{{ m.id }}">{{ m.nome }}</option>{% endfor %}
+          </select>
+
+          <label>Professor (opcional)</label>
+          <select name="professor_id">
+            <option value="">-- selecione --</option>
+            {% for p in professores %}<option value="{{ p.id }}">{{ p.nome }}</option>{% endfor %}
+          </select>
+
+          <label>Nota</label><input name="nota" required type="number" step="0.01" min="0" max="10">
+
+          <div class="form-actions">
+            <button class="btn" type="submit">Salvar</button>
+            <a class="btn ghost" href="{{ url_for('listar_notas') }}">Cancelar</a>
+          </div>
+        </form>
+      </section>
+      {% endif %}
+
+      {% if view == 'notas_edit' %}
+      <section>
+        <h2>Editar Nota</h2>
+        <form method="post" action="{{ url_for('edit_nota', id=item.id) }}" class="form">
+          <label>Aluno</label>
+          <select name="aluno_id" required>
+            {% for a in alunos %}
+            <option value="{{ a.id }}" {{ 'selected' if a.id==item.aluno_id else '' }}>{{ a.nome }}</option>
+            {% endfor %}
+          </select>
+
+          <label>Disciplina (Matéria)</label>
+          <select name="materia_id" required>
+            {% for m in materias %}
+            <option value="{{ m.id }}" {{ 'selected' if m.id==item.materia_id else '' }}>{{ m.nome }}</option>
+            {% endfor %}
+          </select>
+
+          <label>Professor</label>
+          <select name="professor_id">
+            <option value="">-- selecione --</option>
+            {% for p in professores %}
+            <option value="{{ p.id }}" {{ 'selected' if p.id==item.professor_id else '' }}>{{ p.nome }}</option>
+            {% endfor %}
+          </select>
+
+          <label>Nota</label><input name="nota" value="{{ item.nota }}" required type="number" step="0.01" min="0"
+            max="10">
+
+          <div class="form-actions">
+            <button class="btn" type="submit">Atualizar</button>
+            <a class="btn ghost" href="{{ url_for('listar_notas') }}">Cancelar</a>
+          </div>
+        </form>
+      </section>
+      {% endif %}
+
+      {# PERFIL #}
+      {% if view == 'perfil' %}
+      <section>
+        <h2>Perfil</h2>
+        <form method="post" action="{{ url_for('perfil') }}" class="form">
+          <label>Nome</label><input name="nome" value="{{ admin.nome }}" required>
+          <label>Email</label><input name="email" type="email" value="{{ admin.email }}" required>
+          <label>Senha (opcional)</label><input name="senha" type="password" placeholder="Nova senha">
+          <div class="form-actions">
+            <button class="btn" type="submit">Salvar</button>
+          </div>
+        </form>
+      </section>
+      {% endif %}
+    </main>
+  </div>
+</body>
+
+</html>

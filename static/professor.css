@@ -1,0 +1,217 @@
+/* =============================== */
+/*  ESTILO GERAL                   */
+/* =============================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+body {
+    display: flex;
+    background: #121212;
+    color: #fff;
+}
+
+/* =============================== */
+/*  SIDEBAR                        */
+/* =============================== */
+.sidebar {
+    width: 260px;
+    height: 100vh;
+    background: #1a1a1a;
+    padding: 20px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    box-shadow: 2px 0 6px rgba(0,0,0,0.4);
+}
+
+.sidebar .logo h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #4fa3ff;
+}
+
+.sidebar ul {
+    list-style: none;
+}
+
+.sidebar ul li {
+    margin: 15px 0;
+}
+
+.sidebar ul li a {
+    text-decoration: none;
+    color: #ddd;
+    padding: 10px;
+    display: block;
+    background: #242424;
+    border-radius: 8px;
+    transition: 0.3s;
+}
+
+.sidebar ul li a:hover {
+    background: #4fa3ff;
+    color: #000;
+}
+
+.logout {
+    display: block;
+    margin-top: 40px;
+    padding: 12px;
+    text-align: center;
+    background: #d9534f;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: 0.3s;
+}
+
+.logout:hover {
+    background: #ff6b63;
+}
+
+/* =============================== */
+/*  CONTEÚDO PRINCIPAL             */
+/* =============================== */
+.main-content {
+    margin-left: 260px;
+    padding: 30px;
+    width: calc(100% - 260px);
+}
+
+/* =============================== */
+/*  CABEÇALHO                      */
+/* =============================== */
+.top-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    background: #1f1f1f;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.4);
+}
+
+.foto-prof {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #4fa3ff;
+}
+
+/* =============================== */
+/*  CARDS / SEÇÕES                 */
+/* =============================== */
+.card {
+    background: #1b1b1b;
+    padding: 25px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.4);
+}
+
+.card h2 {
+    color: #4fa3ff;
+    margin-bottom: 15px;
+}
+
+/* =============================== */
+/*  TABELAS                        */
+/* =============================== */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+table th, table td {
+    padding: 12px;
+    border-bottom: 1px solid #333;
+}
+
+table th {
+    background: #242424;
+}
+
+.aprovado {
+    color: #57ff89;
+}
+
+.reprovado {
+    color: #ff5454;
+}
+
+/* =============================== */
+/*  FORMULÁRIOS                    */
+/* =============================== */
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+input, select {
+    padding: 10px;
+    border-radius: 8px;
+    border: none;
+    background: #2a2a2a;
+    color: #fff;
+}
+
+button, .btn {
+    padding: 10px;
+    border: none;
+    background: #4fa3ff;
+    color: #000;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover, .btn:hover {
+    background: #72baff;
+}
+
+/* =============================== */
+/*  LISTAS DE MATERIAIS            */
+/* =============================== */
+section ul {
+    list-style: none;
+    margin-top: 10px;
+}
+
+section ul li a {
+    color: #4fa3ff;
+    text-decoration: none;
+}
+
+section ul li a:hover {
+    text-decoration: underline;
+}
+
+/* =============================== */
+/*  RESPONSIVIDADE                 */
+/* =============================== */
+@media (max-width: 850px) {
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    .top-header {
+        flex-direction: column;
+        text-align: center;
+    }
+}

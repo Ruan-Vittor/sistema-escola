@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="utf-8">
+  <title>Painel do Professor</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='admin.css') }}">
+</head>
+
+<body>
+  <div class="container">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="logo">
+        <h2>Prof<span>School</span></h2>
+      </div>
+
+      <nav class="menu">
+        <a href="{{ url_for('professor_dashboard') }}" class="{{ 'active' if view=='dashboard' else '' }}">🏠
+          Dashboard</a>
+        <a href="{{ url_for('professor_alunos') }}" class="{{ 'active' if view=='alunos' else '' }}">🧑‍🎓 Alunos</a>
+        <a href="{{ url_for('prof_notas') }}" class="{{ 'active' if view=='notas' else '' }}">✏️ Lançar Notas</a>
+        <a href="{{ url_for('prof_materiais') }}" class="{{ 'active' if view=='materiais' else '' }}">📚 Materiais</a>
+        <a href="{{ url_for('prof_perfil') }}" class="{{ 'active' if view=='perfil' else '' }}">⚙️ Perfil</a>
+        <a class="logout" href="{{ url_for('logout') }}">Sair</a>
+      </nav>
+
+      <footer>
+        <p>© 2025 ProfSchool</p>
+      </footer>
+    </aside>
+
+    <!-- CONTEÚDO PRINCIPAL -->
+    <main class="main-content">
+
+      <header>
+        <h1>Painel do Professor</h1>
+      </header>
+
+      <!-- Flash Messages -->
+      <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        {% for category, msg in messages %}
+        <div class="flash {{ category }}">{{ msg }}</div>
+        {% endfor %}
+        {% endif %}
+        {% endwith %}
+      </div>
+
+      <!-- ============================ -->
+      <!-- DASHBOARD -->
+      {% if view == 'dashboard' %}
+      <section class="dashboard">
+        <h2>Resumo</h2>
+        <div class="cards">
+          <div class="card">
+            <h3>Alunos</h3>
+            <p>{{ resumo.total_alunos }}</p>
+          </div>
+          <div class="card">
+            <h3>Turmas</h3>
+            <p>{{ resumo.total_turmas }}</p>
+          </div>
+          <div class="card">
+            <h3>Materiais</h3>
+            <p>{{ resumo.total_materiais }}</p>
+          </div>
+          <div class="card">
+            <h3>Média Geral</h3>
+            <p>{{ resumo.media_geral }}</p>
+          </div>
+        </div>
+      </section>
+      {% endif %}
+
+      <!-- ============================ -->
+      <!-- ALUNOS -->
+      {% if view == 'alunos' %}
+      <section>
+        <h2>Alunos por Turma</h2>
+
+        <form method="get" action="{{ url_for('professor_alunos') }}" class="form">
+          <label>Selecione a Turma</label>
+          <select name="turma_id" onchange="this.form.submit()" required>
+            <option value="">-- escolha --</option>
+            {% for t in turmas %}
+            <option value="{{ t.id }}" {% if turma_selecionada and turma_selecionada==t.id %}selected{% endif %}>
+              {{ t.nome }}
+            </option>
+            {% endfor %}
+          </select>
+        </form>
+
+        {% if alunos %}
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>Média</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in alunos %}
+            <tr>
+              <td>{{ a.aluno }}</td>
+              <td>{{ "%.2f"|format(a.media) }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% elif turma_selecionada %}
+        <p>Nenhum aluno encontrado nessa turma.</p>
+        {% endif %}
+      </section>
+      {% endif %}
+
+      <!-- ============================ -->
+      <!-- NOTAS -->
+      {% if view == 'notas' %}
+      <section>
+        <h2>Lançar Notas</h2>
+        <a class="btn" href="{{ url_for('prof_add_nota') }}">+ Nova Nota</a>
+        <table>
+          <thead>
+            <tr>
+              <th>Aluno</th>
+              <th>Matéria</th>
+              <th>Nota</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for n in notas %}
+            <tr>
+              <td>{{ n.aluno }}</td>
+              <td>{{ n.materia_nome }}</td>
+              <td>{{ n.nota }}</td>
+              <td class="acoes">
+                <a class="link" href="{{ url_for('prof_edit_nota', id=n.id) }}">Editar</a>
+                <form class="inline-form" method="post" action="{{ url_for('prof_delete_nota', id=n.id) }}">
+                  <button class="link danger" type="submit">Excluir</button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4">Nenhuma nota cadastrada.</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </section>
+      {% endif %}
+
+      {% if view == 'notas_add' %}
+      <section>
+        <h2>Lançar Nota</h2>
+        <form method="post" action="{{ url_for('registrar_nota_professor') }}" class="form">
+          <label>Turma</label>
+          <select id="turmaSelect" class="select" required>
+            <option value="">-- selecione uma turma --</option>
+            {% for t in turmas %}
+            <option value="{{ t.id }}">{{ t.nome }}</option>
+            {% endfor %}
+          </select>
+
+          <label>Aluno</label>
+          <select id="alunoSelect" name="aluno_id" class="select" required>
+            <option value="">-- selecione uma turma primeiro --</option>
+          </select>
+
+          <label>Matéria</label>
+          <select name="materia_id" class="select" required>
+            {% for m in materias %}
+            <option value="{{ m.id }}">{{ m.nome }}</option>
+            {% endfor %}
+          </select>
+
+          <label>Nota</label>
+          <input name="nota" type="number" step="0.1" required>
+
+          <div class="form-actions">
+            <button class="btn" type="submit">Salvar</button>
+            <a class="btn ghost" href="{{ url_for('prof_notas') }}">Cancelar</a>
+          </div>
+        </form>
+
+
+      </section>
+      {% endif %}
+
+      {% if view == 'notas_edit' %}
+      <section>
+        <h2>Editar Nota</h2>
+
+        <form method="post" action="{{ url_for('prof_edit_nota', id=nota.id) }}" class="form">
+
+          <label>Aluno</label>
+          <input type="text" value="{{ nota.aluno }}" disabled>
+
+          <label>Matéria</label>
+          <input type="text" value="{{ nota.disciplina }}" disabled>
+
+          <label>Nota</label>
+          <input name="nota" type="number" step="0.1" value="{{ nota.nota }}" required>
+
+          <div class="form-actions">
+            <button class="btn" type="submit">Salvar</button>
+            <a class="btn ghost" href="{{ url_for('prof_notas') }}">Cancelar</a>
+          </div>
+
+        </form>
+
+      </section>
+      {% endif %}
+
+
+      <!-- ============================ -->
+      <!-- MATERIAIS -->
+     {% if view == 'materiais' %}
+<section>
+    <h2>Meus Materiais</h2>
+    <a class="btn" href="{{ url_for('prof_add_material') }}">+ Novo Material</a>
+    <table>
+        <thead>
+            <tr>
+                <th>Título</th>
+                <th>Descrição</th>
+                <th>Link</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in materiais %}
+            <tr>
+                <td>{{ m.titulo }}</td>
+                <td>{{ m.descricao }}</td>
+                <td>
+                    {% if m.link %}
+                    <a href="{{ m.link }}" target="_blank">{{ m.link }}</a>
+                    {% else %}
+                    <i>Sem link</i>
+                    {% endif %}
+                </td>
+                <td class="acoes">
+                    <a class="link" href="{{ url_for('prof_edit_material', id=m.id) }}">Editar</a>
+                    <form class="inline-form" method="post" action="{{ url_for('prof_delete_material', id=m.id) }}">
+                        <button class="link danger" type="submit">Excluir</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+
+{% if view == 'materiais_add' %}
+<section>
+    <h2>Adicionar Material</h2>
+    <form method="post" action="{{ url_for('prof_add_material') }}" class="form">
+        <label>Título</label>
+        <input name="titulo" required>
+        <label>Descrição</label>
+        <textarea name="descricao" rows="4"></textarea>
+        <label>Link</label>
+        <input name="link">
+        <div class="form-actions">
+            <button class="btn" type="submit">Salvar</button>
+            <a class="btn ghost" href="{{ url_for('prof_materiais') }}">Cancelar</a>
+        </div>
+    </form>
+</section>
+{% endif %}
+
+{% if view == 'materiais_edit' %}
+<section>
+    <h2>Editar Material</h2>
+    <form method="post" action="{{ url_for('prof_edit_material', id=material.id) }}" class="form">
+        <label>Título</label>
+        <input name="titulo" value="{{ material.titulo }}" required>
+        <label>Descrição</label>
+        <textarea name="descricao" rows="4">{{ material.descricao }}</textarea>
+        <label>Link</label>
+        <input name="link" value="{{ material.link }}">
+        <div class="form-actions">
+            <button class="btn" type="submit">Salvar</button>
+            <a class="btn ghost" href="{{ url_for('prof_materiais') }}">Cancelar</a>
+        </div>
+    </form>
+</section>
+{% endif %}
+
+      <!-- ============================ -->
+      <!-- PERFIL -->
+      {% if view == 'perfil' %}
+      <section>
+        <h2>Meu Perfil</h2>
+        <form method="post" action="{{ url_for('prof_perfil') }}" class="form">
+          <label>Nome</label>
+          <input name="nome" value="{{ usuario.nome }}" required>
+          <label>Email</label>
+          <input name="email" type="email" value="{{ usuario.email }}" required>
+          <label>Senha (opcional)</label>
+          <input name="senha" type="password" placeholder="Nova senha">
+          <div class="form-actions">
+            <button class="btn" type="submit">Salvar</button>
+          </div>
+        </form>
+      </section>
+      {% endif %}
+
+    </main>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById("searchTurma");
+    const select = document.getElementById("turma-select");
+
+    searchInput?.addEventListener("input", function () {
+      const filter = this.value.toLowerCase();
+      const options = select.options;
+
+      for (let i = 0; i < options.length; i++) {
+        const text = options[i].text.toLowerCase();
+        if (i === 0) continue; // ignora a opção "-- escolha --"
+        options[i].style.display = text.includes(filter) ? "block" : "none";
+      }
+    });
+  </script>
+
+  <script>
+    document.getElementById("turmaSelect").addEventListener("change", function () {
+      const turma_id = this.value;
+      const alunoSelect = document.getElementById("alunoSelect");
+
+      alunoSelect.innerHTML = "<option>Carregando...</option>";
+
+      if (!turma_id) {
+        alunoSelect.innerHTML = "<option>Selecione uma turma primeiro</option>";
+        return;
+      }
+
+      fetch(`/professor/alunos_por_turma?turma_id=${turma_id}`)
+        .then(res => res.json())
+        .then(data => {
+          alunoSelect.innerHTML = "";
+
+          if (!data || data.length === 0) {
+            alunoSelect.innerHTML = "<option>Nenhum aluno nesta turma</option>";
+            return;
+          }
+
+          alunoSelect.innerHTML = "<option value=''>-- selecione o aluno --</option>";
+
+          data.forEach(a => {
+            const op = document.createElement("option");
+            op.value = a.id;
+            op.textContent = a.nome;
+            alunoSelect.appendChild(op);
+          });
+        })
+        .catch(err => {
+          alunoSelect.innerHTML = "<option>Erro ao carregar alunos</option>";
+          console.error(err);
+        });
+    });
+  </script>
+
+
+
+</body>
+
+</html>
